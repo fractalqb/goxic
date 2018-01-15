@@ -1,3 +1,6 @@
+// Template engine that only has named placeholders – nothing more!
+// Copyright (C) 2017 Marcus Perlick
+//
 // Package goxic implements the fractal[qb] toxic template engine
 // concept for the GO programming language.  For details on the idea
 // behind the toxic template engine see

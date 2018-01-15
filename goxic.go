@@ -1,3 +1,5 @@
+// Template engine that only has named placeholders – nothing more!
+// Copyright (C) 2017 Marcus Perlick
 package goxic
 
 import (
@@ -404,7 +406,7 @@ func (u *Unmapped) Error() string {
 	return buf.String()
 }
 
-func InitIndexMap(imap interface{}, tmpl *Template) *Unmapped {
+func InitIndexMap(imap interface{}, tmpl *Template, mapNames func(string) string) *Unmapped {
 	imTy := reflect.TypeOf(imap).Elem()
 	im := reflect.ValueOf(imap).Elem()
 	mappedPhs := make(map[string]bool)
@@ -413,6 +415,7 @@ func InitIndexMap(imap interface{}, tmpl *Template) *Unmapped {
 		for fidx := 0; fidx < imTy.NumField(); fidx++ {
 			sfTy := imTy.Field(fidx)
 			if sfTy.Anonymous && sfTy.Type == reflect.TypeOf(tmpl) {
+				// TODO at most once!
 				imapVal := reflect.ValueOf(imap).Elem()
 				imapVal.Field(fidx).Set(reflect.ValueOf(tmpl))
 			} else {
@@ -420,6 +423,9 @@ func InitIndexMap(imap interface{}, tmpl *Template) *Unmapped {
 				ph, opt, err := parseTag(sfTy.Tag.Get("goxic"))
 				if err != nil {
 					panic("cannot make index map: " + err.Error())
+				}
+				if len(ph) == 0 && mapNames != nil {
+					ph = mapNames(sfTy.Name)
 				}
 				if len(ph) == 0 {
 					continue
@@ -452,8 +458,8 @@ func InitIndexMap(imap interface{}, tmpl *Template) *Unmapped {
 	}
 }
 
-func MustIndexMap(imap interface{}, t *Template) {
-	missing := InitIndexMap(imap, t)
+func MustIndexMap(imap interface{}, t *Template, mapNames func(string) string) {
+	missing := InitIndexMap(imap, t, mapNames)
 	if missing != nil {
 		panic(missing)
 	}

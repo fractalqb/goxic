@@ -1,4 +1,5 @@
-// Package web provides goxic HTML template tools.
+// Template engine that only has named placeholders – nothing more!
+// Copyright (C) 2017 Marcus Perlick
 package web
 
 import (

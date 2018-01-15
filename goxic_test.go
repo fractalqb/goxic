@@ -1,3 +1,5 @@
+// Template engine that only has named placeholders – nothing more!
+// Copyright (C) 2017 Marcus Perlick
 package goxic
 
 import (
@@ -172,7 +174,7 @@ func ExampleFixate() {
 
 type IMap struct {
 	*Template
-	Foo []int `goxic:"Foo"`
+	Foo []int // use naming convention to map, same as `goxic:"Foo"`
 	Bar []int `goxic:"bar"`
 	Baz []int `goxic:"baz opt"`
 }
@@ -183,7 +185,7 @@ func TestIndexMap(t *testing.T) {
 	tmpl.Placeholder("bar")
 	tmpl.Placeholder("quux")
 	var imap IMap
-	unmappend := InitIndexMap(&imap, tmpl)
+	unmappend := InitIndexMap(&imap, tmpl, func(s string) string { return s })
 	assert.Equal(t, tmpl, imap.Template)
 	assertIndices(t, imap.Foo, 0)
 	assertIndices(t, imap.Bar, 1)
