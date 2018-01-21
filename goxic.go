@@ -161,6 +161,12 @@ func (t *Template) Static() ([]byte, bool) {
 	}
 }
 
+func (t *Template) StaticWith(fill Content) ([]byte, bool) {
+	bt := t.NewInitBounT(fill)
+	t = bt.Fixate()
+	return t.Static()
+}
+
 // Content provides the interface Emit that will write the content to
 // an io.Writer.
 //
@@ -307,19 +313,17 @@ func (bt *BounT) Emit(out io.Writer) (n int) {
 	return n
 }
 
-func (bt *BounT) Fixate() (*Template, error) {
+func (bt *BounT) Fixate() *Template {
 	it := bt.Template()
 	if it.PlaceholderNum() == 0 {
-		return nil, nil
+		return nil
 	}
 	res := NewTemplate(it.Name)
-	if err := bt.fix(res, ""); err != nil {
-		return nil, err
-	}
-	return res, nil
+	bt.fix(res, "")
+	return res
 }
 
-func (bt *BounT) fix(to *Template, phPrefix string) error {
+func (bt *BounT) fix(to *Template, phPrefix string) {
 	it := bt.Template()
 	for idx, frag := range it.fix {
 		pre := bt.fill[idx]
@@ -329,9 +333,7 @@ func (bt *BounT) fix(to *Template, phPrefix string) error {
 			}
 		} else if sbt, ok := pre.(*BounT); ok {
 			subPrefix := phPrefix + it.Name + string(pathSep)
-			if err := sbt.fix(to, subPrefix); err != nil {
-				return err
-			}
+			sbt.fix(to, subPrefix)
 		} else {
 			buf := bytes.NewBuffer(nil)
 			pre.Emit(buf)
@@ -347,15 +349,12 @@ func (bt *BounT) fix(to *Template, phPrefix string) error {
 		}
 	} else if sbt, ok := pre.(*BounT); ok {
 		subPrefix := phPrefix + it.Name + string(pathSep)
-		if err := sbt.fix(to, subPrefix); err != nil {
-			return err
-		}
+		sbt.fix(to, subPrefix)
 	} else {
 		buf := bytes.NewBuffer(nil)
 		pre.Emit(buf)
 		to.AddStr(buf.String())
 	}
-	return nil
 }
 
 func (bt *BounT) Wrap(wrapper func(Content) Content) {

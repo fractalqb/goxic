@@ -161,7 +161,7 @@ func ExampleFixate() {
 	tn.Placeholder("quux")
 	bt := tr.NewBounT()
 	bt.BindName("bar", tn.NewBounT())
-	ft, _ := bt.Fixate()
+	ft := bt.Fixate()
 	for i, ph := range ft.Placeholders() {
 		fmt.Printf("%d: [%s]\n", i, ph)
 	}
