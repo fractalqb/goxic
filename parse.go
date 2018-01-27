@@ -209,6 +209,8 @@ func (p *Parser) addLine(t *Template, line string) error {
 		if tok > 0 {
 			t.AddStr(line[:tok])
 			line = line[tok+len(p.StartInlinePh):]
+		} else if tok == 0 {
+			line = line[len(p.StartInlinePh):]
 		}
 		tok = strings.Index(line, p.EndInlinePh)
 		if tok < 0 {

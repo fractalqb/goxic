@@ -372,6 +372,21 @@ subln
 	}
 }
 
+func TestOnlyPlaceholder(t *testing.T) {
+	rd := strings.NewReader("`foo`")
+	p := newTestParser()
+	ts := make(map[string]*Template)
+	if err := p.Parse(rd, t.Name(), ts); err != nil {
+		t.Fatalf("cannot parse template: %s", err)
+	} else {
+		tp := ts[""]
+		assert.NotNil(t, tp)
+		assert.Equal(t, 0, tp.FixCount())
+		assert.Equal(t, 1, tp.PlaceholderNum())
+		assert.Equal(t, "foo", tp.PlaceholderAt(0))
+	}
+}
+
 func TestEmptyNestedTemplate(t *testing.T) {
 	t.Error("NYI: empty template has to appear in result map of Parse()")
 }
