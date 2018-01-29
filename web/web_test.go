@@ -21,6 +21,25 @@ func TestHtmlEscWriter_Write(t *testing.T) {
 	assert.Equal(t, "&lt;&gt;&amp;&quot;&apos;", buf.String(), "wrong output")
 }
 
+func TestHtmlEscWriter_umls(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	ewr := HtmlEscWriter{Escape: buf}
+	n, err := ewr.Write([]byte("öäüß"))
+	assert.Nil(t, err, "have error: ", err)
+	assert.Equal(t, 8, n, "expected bytes written")
+	assert.Equal(t, "öäüß", buf.String(), "wrong output")
+}
+
+func BenchmarkHtmlEscWriter_umls(b *testing.B) {
+	buf := bytes.NewBuffer(nil)
+	ewr := HtmlEscWriter{Escape: buf}
+	txt := []byte("öäüß")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ewr.Write(txt)
+	}
+}
+
 func ExampleEscape() {
 	tmpl := goxic.NewTemplate("")
 	tmpl.Placeholder("html")

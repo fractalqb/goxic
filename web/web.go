@@ -42,11 +42,10 @@ type HtmlEscWriter struct {
 }
 
 func (hew *HtmlEscWriter) Write(p []byte) (n int, err error) {
-	var buf []byte = hew.buf[:]
 	for _, b := range p {
 		hew.buf[hew.wp] = b
 		hew.wp++
-		if utf8.FullRune(buf) {
+		if buf := hew.buf[:hew.wp]; utf8.FullRune(buf) {
 			hew.wp = 0
 			if r, _ := utf8.DecodeRune(buf); r == utf8.RuneError {
 				return n, errors.New("utf8 rune decoding error")
