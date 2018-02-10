@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fractalqb/goxic.svg)](https://travis-ci.org/fractalqb/goxic)
+
 # goxic
 Template engine with temlates that only have named placeholders
 – nothing more! 

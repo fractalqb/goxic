@@ -405,6 +405,8 @@ func (u *Unmapped) Error() string {
 	return buf.String()
 }
 
+func IdName(nm string) string { return nm }
+
 func InitIndexMap(imap interface{}, tmpl *Template, mapNames func(string) string) *Unmapped {
 	imTy := reflect.TypeOf(imap).Elem()
 	im := reflect.ValueOf(imap).Elem()

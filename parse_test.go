@@ -388,5 +388,15 @@ func TestOnlyPlaceholder(t *testing.T) {
 }
 
 func TestEmptyNestedTemplate(t *testing.T) {
-	t.Error("NYI: empty template has to appear in result map of Parse()")
+	rd := strings.NewReader(`foo
+<!-- >>> empty >>> -->
+<!-- <<< empty <<< -->
+bar`)
+	ts := make(map[string]*Template)
+	p := newTestParser()
+	if err := p.Parse(rd, t.Name(), ts); err != nil {
+		t.Fatalf("cannot parse template: %s", err)
+	} else {
+		assert.Equal(t, 1, len(ts))
+	}
 }

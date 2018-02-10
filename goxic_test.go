@@ -185,7 +185,7 @@ func TestIndexMap(t *testing.T) {
 	tmpl.Placeholder("bar")
 	tmpl.Placeholder("quux")
 	var imap IMap
-	unmappend := InitIndexMap(&imap, tmpl, func(s string) string { return s })
+	unmappend := InitIndexMap(&imap, tmpl, IdName)
 	assert.Equal(t, tmpl, imap.Template)
 	assertIndices(t, imap.Foo, 0)
 	assertIndices(t, imap.Bar, 1)
@@ -193,3 +193,23 @@ func TestIndexMap(t *testing.T) {
 	assert.Equal(t, 1, len(unmappend.Placeholders))
 	assert.Equal(t, "quux", unmappend.Placeholders[0])
 }
+
+// Would be nice to work…
+//type GxtNest struct {
+//	*Template
+//	Id []int
+//}
+
+//type gxtFinal struct {
+//	GxtNest
+//	Name []int
+//}
+
+//func TestIndexMap_nest(t *testing.T) {
+//	tmpl := NewTemplate(t.Name())
+//	tmpl.Placeholder("Id")
+//	tmpl.Placeholder("Name")
+//	var imap gxtFinal
+//	unmapped := InitIndexMap(&imap, tmpl, IdName)
+//	assert.Equal(t, 0, len(unmapped.Placeholders), unmapped.Placeholders)
+//}
