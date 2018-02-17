@@ -25,6 +25,11 @@ type Parser struct {
 	EndNameRgxGrp    int
 	EndTBrkRgxGrp    int
 	Endl             string
+	PrepLine         func(string) string
+}
+
+func PrepTrimWS(line string) (trimmed string) {
+	return strings.Trim(line, " \t")
 }
 
 func pPush(stack []string, s string) (updStack []string, path string) {
@@ -189,6 +194,9 @@ func (p *Parser) Parse(rd io.Reader, rootName string, into map[string]*Template)
 				return err
 			}
 			curTmpl.AddStr(endl)
+			if p.PrepLine != nil {
+				line = p.PrepLine(line)
+			}
 			p.addLine(curTmpl, line)
 			endl = p.Endl
 		}

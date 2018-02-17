@@ -122,6 +122,7 @@ func ParseHtmlTemplate(
 	}
 	defer tFile.Close()
 	p := NewHtmlParser()
+	p.PrepLine = goxic.PrepTrimWS
 	err = p.Parse(tFile, rootName, into)
 	return err
 }

@@ -400,3 +400,30 @@ bar`)
 		assert.Equal(t, 1, len(ts))
 	}
 }
+
+func TestParser_prepline(t *testing.T) {
+	rd := strings.NewReader(`<html>
+    <head>
+	   <title>test prepline</title>
+    <head>
+</html>`)
+	ts := make(map[string]*Template)
+	p := newTestParser()
+	p.PrepLine = func(line string) string {
+		return strings.Trim(line, " \t")
+	}
+	if err := p.Parse(rd, t.Name(), ts); err != nil {
+		t.Fatalf("cannot parse template: %s", err)
+	} else {
+		assert.Equal(t, 1, len(ts))
+	}
+	prepped, ok := ts[""].Static()
+	assert.True(t, ok)
+	assert.Equal(t,
+		`<html>
+<head>
+<title>test prepline</title>
+<head>
+</html>`,
+		string(prepped))
+}
