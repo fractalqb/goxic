@@ -78,7 +78,7 @@ func needTemplate(t *Template, rootPath string, name string) (*Template, error) 
 	if t == nil {
 		t = NewTemplate(name)
 	} else if t.Name != name {
-		return t, fmt.Errorf("template name mismatch '%s' ≠ '$s'",
+		return t, fmt.Errorf("template name mismatch '%s' ≠ '%s'",
 			t.Name,
 			name)
 	}
