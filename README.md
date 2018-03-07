@@ -1,6 +1,9 @@
-[![Build Status](https://travis-ci.org/fractalqb/goxic.svg)](https://travis-ci.org/fractalqb/goxic)
-
 # goxic
+[![Build Status](https://travis-ci.org/fractalqb/goxic.svg)](https://travis-ci.org/fractalqb/goxic)
+[![codecov](https://codecov.io/gh/fractalqb/goxic/branch/master/graph/badge.svg)](https://codecov.io/gh/fractalqb/goxic)
+[![Go Report Card](https://goreportcard.com/badge/github.com/fractalqb/goxic)](https://goreportcard.com/report/github.com/fractalqb/goxic)
+[![GoDoc](https://godoc.org/github.com/fractalqb/goxic?status.svg)](https://godoc.org/github.com/fractalqb/goxic)
+
 Template engine with temlates that only have named placeholders
 – nothing more! 
 
