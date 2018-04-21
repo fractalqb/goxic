@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"unicode/utf8"
 
@@ -19,16 +18,16 @@ func NewHtmlParser() *goxic.Parser {
 		StartInlinePh: "`",
 		EndInlinePh:   "`",
 		BlockPh: regexp.MustCompile(
-			"^[ \\t]*<!--(\\\\?) >>> ([a-zA-Z0-9_-]+) <<< (\\\\?)-->[ \\t]*$"),
+			`^[ \t]*<!--(\\?) >>> ([a-zA-Z0-9_-]+) <<< (\\?)-->[ \t]*$`),
 		PhNameRgxGrp: 2,
 		PhLBrkRgxGrp: 1,
 		PhTBrkRgxGrp: 3,
 		StartSubTemplate: regexp.MustCompile(
-			"^[ \\t]*<!--(\\\\?) >>> ([a-zA-Z0-9_-]+) >>> -->[ \\t]*$"),
+			`^[ \t]*<!--(\\?) >>> ([a-zA-Z0-9_-]+) >>> -->[ \t]*$`),
 		StartNameRgxGrp: 2,
 		StartLBrkRgxGrp: 1,
 		EndSubTemplate: regexp.MustCompile(
-			"^[ \\t]*<!-- <<< ([a-zA-Z0-9_-]+) <<< (\\\\?)-->[ \\t]*$"),
+			`^[ \t]*<!-- <<< ([a-zA-Z0-9_-]+) <<< (\\?)-->[ \t]*$`),
 		EndNameRgxGrp: 1,
 		EndTBrkRgxGrp: 2,
 		Endl:          "\n"}
@@ -110,21 +109,6 @@ type EscHtml struct {
 func (hc EscHtml) Emit(wr io.Writer) int {
 	esc := HtmlEscWriter{Escape: wr}
 	return hc.Cnt.Emit(&esc)
-}
-
-func ParseHtmlTemplate(
-	templateFile string,
-	rootName string,
-	into map[string]*goxic.Template) (err error) {
-	tFile, err := os.Open(templateFile)
-	if err != nil {
-		return err
-	}
-	defer tFile.Close()
-	p := NewHtmlParser()
-	p.PrepLine = goxic.PrepTrimWS
-	err = p.Parse(tFile, rootName, into)
-	return err
 }
 
 // Span wraps content into a HTML <span></span> element

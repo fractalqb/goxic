@@ -86,7 +86,7 @@ func (t *Template) FixCount() int {
 	return len(t.fix)
 }
 
-// FixAt returns the peice of static content with the index idx
+// FixAt returns the piece of static content with the index idx
 // (indices are zero-based).
 func (t *Template) FixAt(idx int) []byte {
 	if idx < 0 || idx >= len(t.fix) {
@@ -108,8 +108,8 @@ func (t *Template) PlaceholderNum() int {
 	return len(t.plhNm2Idxs)
 }
 
-// Retuns all placeholders – more precisely placeholder names –
-// defined in the template.
+// Placeholders returns all placeholders – more precisely placeholder
+// names – defined in the template.
 func (t *Template) Placeholders() []string {
 	res := make([]string, 0, len(t.plhNm2Idxs))
 	for nm := range t.plhNm2Idxs {
@@ -120,7 +120,7 @@ func (t *Template) Placeholders() []string {
 
 // PlaceholderAt returns the placeholder that will be emitted between
 // static content idx-1 and static content idx. Note that
-// PlaceholderAt(0) will be emitted before the first peice of static
+// PlaceholderAt(0) will be emitted before the first piece of static
 // content. This placeholder is optional.
 func (t *Template) PlaceholderAt(idx int) string {
 	if t.plhAt == nil || idx >= len(t.plhAt) {

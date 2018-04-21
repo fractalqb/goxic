@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -119,7 +120,7 @@ type DuplicateTemplates map[string]*Template
 func (err DuplicateTemplates) Error() string {
 	buf := bytes.NewBufferString("duplicate templates: ")
 	sep := ""
-	for nm, _ := range err {
+	for nm := range err {
 		buf.WriteString(sep)
 		buf.WriteString(nm)
 		sep = ", "
@@ -202,7 +203,8 @@ func (p *Parser) Parse(rd io.Reader, rootName string, into map[string]*Template)
 		}
 	}
 	if len(path) > 0 {
-		return fmt.Errorf("end of input in nested template")
+		return fmt.Errorf("end of input in nested template: %s",
+			strings.Join(path, ", "))
 	}
 	storeTemplate(into, curTmpl, pStr, dup)
 	if len(dup) > 0 {
@@ -233,4 +235,15 @@ func (p *Parser) addLine(t *Template, line string) error {
 		t.AddStr(line)
 	}
 	return nil
+}
+
+func (p *Parser) ParseFile(templateFile string, rootName string, into map[string]*Template) error {
+	tFile, err := os.Open(templateFile)
+	if err != nil {
+		return err
+	}
+	defer tFile.Close()
+	//p.PrepLine = goxic.PrepTrimWS
+	err = p.Parse(tFile, rootName, into)
+	return err
 }
