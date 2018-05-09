@@ -13,6 +13,8 @@ import (
 
 type fragment []byte
 
+type PhIdx = int
+
 // Template holds a sequence of fixed (dstatic) content fragment that
 // have to be emitted verbatim. These fragments are intermixed with
 // named placeholders. The content to fill in the placeholders
@@ -162,7 +164,7 @@ func (t *Template) Static() ([]byte, bool) {
 }
 
 func (t *Template) StaticWith(fill Content) ([]byte, bool) {
-	bt := t.NewInitBounT(fill)
+	bt := t.NewInitBounT(fill, nil)
 	t = bt.Fixate()
 	return t.Static()
 }
@@ -198,21 +200,23 @@ type BounT struct {
 	fill []Content
 }
 
-func (t *Template) NewBounT() *BounT {
-	res := BounT{
-		tmpl: t,
-		fill: make([]Content, t.FixCount()+1)}
-	return &res
+func (t *Template) NewBounT(reuse *BounT) *BounT {
+	if reuse == nil {
+		reuse = new(BounT)
+	}
+	reuse.tmpl = t
+	reuse.fill = make([]Content, t.FixCount()+1)
+	return reuse
 }
 
-func (t *Template) NewInitBounT(cnt Content) *BounT {
-	res := t.NewBounT()
-	for i := 0; i < len(res.fill); i++ {
+func (t *Template) NewInitBounT(cnt Content, reuse *BounT) *BounT {
+	reuse = t.NewBounT(reuse)
+	for i := 0; i < len(reuse.fill); i++ {
 		if len(t.PlaceholderAt(i)) > 0 {
-			res.fill[i] = cnt
+			reuse.fill[i] = cnt
 		}
 	}
-	return res
+	return reuse
 }
 
 func (bt *BounT) Template() *Template {

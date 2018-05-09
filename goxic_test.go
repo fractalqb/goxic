@@ -100,7 +100,7 @@ func TestCatchEmit(t *testing.T) {
 	tmpl.AddStr("begin\n")
 	tmpl.Placeholder("foo")
 	tmpl.AddStr("end")
-	bt := tmpl.NewBounT()
+	bt := tmpl.NewBounT(nil)
 	bt.BindGenName("foo", func(wr io.Writer) int {
 		panic(EmitError{4711, errors.New("fails")})
 	})
@@ -113,7 +113,7 @@ func TestCatchEmit(t *testing.T) {
 func TestAnonymousBindFails(t *testing.T) {
 	tmpl := NewTemplate(t.Name())
 	tmpl.AddStr("foo")
-	bt := tmpl.NewBounT()
+	bt := tmpl.NewBounT(nil)
 	err := bt.BindP([]int{0}, 4711)
 	assert.NotNil(t, err)
 }
@@ -125,7 +125,7 @@ func ExampleBounT() {
 	tmpl.Placeholder("foo")
 	tmpl.AddStr("<thisisfix2>")
 	tmpl.Placeholder("bar")
-	bnt := tmpl.NewBounT()
+	bnt := tmpl.NewBounT(nil)
 	bnt.BindPName("foo", "FOO")
 	bnt.BindPName("bar", "BAR")
 	bnt.Emit(os.Stdout)
@@ -138,7 +138,7 @@ func ExampleDynamicContent() {
 	tmpl := NewTemplate("")
 	tmpl.AddStr("It's now ")
 	tmpl.Placeholder("timestamp")
-	bt := tmpl.NewBounT()
+	bt := tmpl.NewBounT(nil)
 	bt.BindName("timestamp", Generator(func(wr io.Writer) int {
 		if n, err := fmt.Fprint(wr, ts); err != nil {
 			panic(EmitError{n, err})
@@ -159,13 +159,13 @@ func ExampleFixate() {
 	tn := NewTemplate("sub")
 	tn.AddStr("N-TMPL")
 	tn.Placeholder("quux")
-	bt := tr.NewBounT()
-	bt.BindName("bar", tn.NewBounT())
+	bt := tr.NewBounT(nil)
+	bt.BindName("bar", tn.NewBounT(nil))
 	ft := bt.Fixate()
 	for i, ph := range ft.Placeholders() {
 		fmt.Printf("%d: [%s]\n", i, ph)
 	}
-	bt = ft.NewInitBounT(Print{"___"})
+	bt = ft.NewInitBounT(Print{"___"}, nil)
 	bt.Emit(os.Stdout)
 	// Output:
 	// 0: [root/quux]

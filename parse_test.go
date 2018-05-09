@@ -117,11 +117,11 @@ last line of TL template
 		fmt.Printf("parsing failed: %s\n", err)
 	} else {
 		tlt := ts[""]
-		if _, err := CatchEmit(tlt.NewBounT(), os.Stdout); err != nil {
+		if _, err := CatchEmit(tlt.NewBounT(nil), os.Stdout); err != nil {
 			fmt.Println(err)
 		}
 		sbt := ts["subt1"]
-		sbbt := sbt.NewBounT()
+		sbbt := sbt.NewBounT(nil)
 		sbbt.BindPName("sub1ph", "SUB1PH")
 		if _, err := CatchEmit(sbbt, os.Stdout); err != nil {
 			fmt.Println(err)
