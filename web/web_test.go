@@ -43,8 +43,8 @@ func BenchmarkHtmlEscWriter_umls(b *testing.B) {
 func ExampleEscape() {
 	tmpl := goxic.NewTemplate("")
 	tmpl.Placeholder("html")
-	bt := tmpl.NewBounT()
-	bt.BindName("html", EscHtml{goxic.Print{"<&\"'>"}})
+	bt := tmpl.NewBounT(nil)
+	bt.BindName("html", HtmlEsc{goxic.Print{"<&\"'>"}})
 	bt.Emit(os.Stdout)
 	// Output:
 	// &lt;&amp;&quot;&apos;&gt;

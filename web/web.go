@@ -93,7 +93,7 @@ func (hew *HtmlEscWriter) Write(p []byte) (n int, err error) {
 	return n, nil
 }
 
-func HtmlEsc(str string) string {
+func EscHtml(str string) string {
 	buf := bytes.NewBuffer(nil)
 	ewr := HtmlEscWriter{Escape: buf}
 	if _, err := ewr.Write([]byte(str)); err != nil {
@@ -102,11 +102,11 @@ func HtmlEsc(str string) string {
 	return buf.String()
 }
 
-type EscHtml struct {
+type HtmlEsc struct {
 	Cnt goxic.Content
 }
 
-func (hc EscHtml) Emit(wr io.Writer) int {
+func (hc HtmlEsc) Emit(wr io.Writer) int {
 	esc := HtmlEscWriter{Escape: wr}
 	return hc.Cnt.Emit(&esc)
 }
@@ -119,7 +119,7 @@ type Span struct {
 }
 
 func NewSpan(around goxic.Content, spanId string, spanClass string) *Span {
-	res := Span{id: HtmlEsc(spanId), class: HtmlEsc(spanClass), Wrapped: around}
+	res := Span{id: EscHtml(spanId), class: EscHtml(spanClass), Wrapped: around}
 	return &res
 }
 

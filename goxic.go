@@ -8,6 +8,7 @@ import (
 	"io"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -146,6 +147,79 @@ func (t *Template) PlaceholderIdxs(name string) []int {
 	} else {
 		return res
 	}
+}
+
+type renameErr []string
+
+func (re renameErr) Error() string {
+	switch len(re) {
+	case 1:
+		return fmt.Sprintf("template has no placeholder '%s'", re[0])
+	case 2:
+		return fmt.Sprintf("cannot rename '%s', new name '%s' already exists",
+			re[0], re[1])
+	default:
+		return "general renaming error"
+	}
+}
+
+func RenameUnknown(err error) bool {
+	re, ok := err.(renameErr)
+	if ok {
+		return len(re) == 1
+	} else {
+		return false
+	}
+}
+
+func RenameExists(err error) bool {
+	re, ok := err.(renameErr)
+	if ok {
+		return len(re) == 2
+	} else {
+		return false
+	}
+}
+
+// RenamePh renames the current placeholder to a new name. If merge is true
+// the current placeholder will be renamed even if a placeholder with the
+// newName already exists. Otherwise an error is retrned. Renaming a placeholder
+// that does not exists also result in an error.
+func (t *Template) RenamePh(current, newName string, merge bool) error {
+	var cIdxs []int
+	var ok bool
+	if cIdxs, ok = t.plhNm2Idxs[current]; !ok {
+		return renameErr{current}
+	}
+	if current == newName {
+		return nil
+	}
+	if nIdxs, ok := t.plhNm2Idxs[newName]; ok && !merge {
+		return renameErr{current, newName}
+	} else if ok {
+		cIdxs = append(cIdxs, nIdxs...)
+		sort.Slice(cIdxs, func(i, j int) bool {
+			return cIdxs[i] < cIdxs[j]
+		})
+	}
+	delete(t.plhNm2Idxs, current)
+	t.plhNm2Idxs[newName] = cIdxs
+	for i := range t.plhAt {
+		if t.plhAt[i] == current {
+			t.plhAt[i] = newName
+		}
+	}
+	return nil
+}
+
+func (t *Template) XformPhs(merge bool, x func(string) string) error {
+	phs := t.Placeholders()
+	for _, ph := range phs {
+		if err := t.RenamePh(ph, x(ph), merge); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *Template) Static() ([]byte, bool) {
@@ -336,7 +410,7 @@ func (bt *BounT) fix(to *Template, phPrefix string) {
 				to.Placeholder(phPrefix + phnm)
 			}
 		} else if sbt, ok := pre.(*BounT); ok {
-			subPrefix := phPrefix + it.Name + string(pathSep)
+			subPrefix := phPrefix + sbt.Template().Name + ":" //string(pathSep)
 			sbt.fix(to, subPrefix)
 		} else {
 			buf := bytes.NewBuffer(nil)
@@ -352,7 +426,7 @@ func (bt *BounT) fix(to *Template, phPrefix string) {
 			to.Placeholder(phPrefix + phnm)
 		}
 	} else if sbt, ok := pre.(*BounT); ok {
-		subPrefix := phPrefix + it.Name + string(pathSep)
+		subPrefix := phPrefix + sbt.Template().Name + ":" //string(pathSep)
 		sbt.fix(to, subPrefix)
 	} else {
 		buf := bytes.NewBuffer(nil)
@@ -370,26 +444,39 @@ func (bt *BounT) Wrap(wrapper func(Content) Content) {
 	}
 }
 
-func parseTag(tag string) (placeholder string, optional bool, err error) {
-	optional = false
+type tagMode int
+
+//go:generate -t tagMode
+const (
+	tagNone tagMode = iota
+	tagMand
+	tagOpt
+	tagIgnore
+)
+
+func parseTag(tag string) (mode tagMode, placeholder string, err error) {
+	mode = tagMand
 	if len(tag) > 0 {
 		if sep := strings.IndexRune(tag, ' '); sep >= 0 {
 			if sep == 0 {
-				return "", false, fmt.Errorf("goxic imap: tag format '%s'", tag)
+				return mode, "", fmt.Errorf("goxic imap: tag format '%s'", tag)
 			}
 			placeholder = tag[:sep]
+			if placeholder == "-" {
+				return tagIgnore, placeholder, nil
+			}
 			switch tag[sep+1:] {
 			case "opt":
-				optional = true
+				mode = tagOpt
 			default:
-				return "", false, fmt.Errorf("goxic imap: illgeal tag option '%s'", tag[sep+1:])
+				return mode, "", fmt.Errorf("goxic imap: illgeal tag option '%s'", tag[sep+1:])
 			}
-			return placeholder, optional, nil
+			return mode, placeholder, nil
 		} else {
-			return tag, optional, nil
+			return mode, tag, nil
 		}
 	} else {
-		return "", false, nil
+		return tagNone, "", nil
 	}
 }
 
@@ -411,6 +498,25 @@ func (u *Unmapped) Error() string {
 
 func IdName(nm string) string { return nm }
 
+func isPhIdxs(f *reflect.StructField,
+	mapNames func(string) string) (ph string, opt bool, err error) {
+	// TODO skip unsettable fields
+	mode, ph, err := parseTag(f.Tag.Get("goxic"))
+	switch mode {
+	case tagMand:
+		opt = false
+	case tagOpt:
+		opt = true
+	}
+	if err != nil {
+		return "", opt, err
+	}
+	if len(ph) == 0 && mapNames != nil {
+		ph = mapNames(f.Name)
+	}
+	return ph, opt, nil
+}
+
 func InitIndexMap(imap interface{}, tmpl *Template, mapNames func(string) string) *Unmapped {
 	imTy := reflect.TypeOf(imap).Elem()
 	im := reflect.ValueOf(imap).Elem()
@@ -423,20 +529,8 @@ func InitIndexMap(imap interface{}, tmpl *Template, mapNames func(string) string
 				// TODO at most once!
 				imapVal := reflect.ValueOf(imap).Elem()
 				imapVal.Field(fidx).Set(reflect.ValueOf(tmpl))
-			} else {
-				// TODO skip unsettable fields
-				ph, opt, err := parseTag(sfTy.Tag.Get("goxic"))
-				if err != nil {
-					panic("cannot make index map: " + err.Error())
-				}
-				if len(ph) == 0 && mapNames != nil {
-					ph = mapNames(sfTy.Name)
-				}
-				if len(ph) == 0 {
-					continue
-				}
-				var idxs []int
-				idxs = tmpl.PlaceholderIdxs(string(ph))
+			} else if ph, opt, err := isPhIdxs(&sfTy, mapNames); len(ph) > 0 {
+				var idxs []int = tmpl.PlaceholderIdxs(string(ph))
 				if idxs != nil {
 					mappedPhs[ph] = true
 					sf := im.Field(fidx)
@@ -444,7 +538,9 @@ func InitIndexMap(imap interface{}, tmpl *Template, mapNames func(string) string
 				} else if opt {
 					sf := im.Field(fidx)
 					sf.Set(reflect.ValueOf(emptyIndices))
-				}
+				} // TODO error on missing mandatory indexes
+			} else if err != nil {
+				panic("failed to index field: " + err.Error())
 			}
 		}
 	default:

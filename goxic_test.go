@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/stvp/assert"
@@ -168,7 +169,7 @@ func ExampleFixate() {
 	bt = ft.NewInitBounT(Print{"___"}, nil)
 	bt.Emit(os.Stdout)
 	// Output:
-	// 0: [root/quux]
+	// 0: [sub:quux]
 	// fooN-TMPL___baz
 }
 
@@ -192,6 +193,38 @@ func TestIndexMap(t *testing.T) {
 	assertIndices(t, imap.Baz)
 	assert.Equal(t, 1, len(unmappend.Placeholders))
 	assert.Equal(t, "quux", unmappend.Placeholders[0])
+}
+
+func TestTemplate_RenamePh(t *testing.T) {
+	tmpl := NewTemplate("rename")
+	tmpl.AddStr("AB")
+	tmpl.Placeholder("a")
+	tmpl.AddStr("CD")
+	tmpl.Placeholder("b")
+	tmpl.AddStr("EF")
+	tmpl.Placeholder("a")
+	tmpl.AddStr("GH")
+	tmpl.Placeholder("b")
+	tmpl.AddStr("IJ")
+	err := tmpl.RenamePh("unknown", "foo", true)
+	if err == nil || err.Error() != "template has no placeholder 'unknown'" {
+		t.Fatalf("expected unkonwn placeholder, got: %v", err)
+	}
+	err = tmpl.RenamePh("a", "b", false)
+	if err == nil || err.Error() != "cannot rename 'a', new name 'b' already exists" {
+		t.Fatalf("expected already exists, got: %v", err)
+	}
+	err = tmpl.RenamePh("a", "c", false)
+	if err != nil {
+		t.Fatalf("unexpected expected error a → c: %v", err)
+	}
+	err = tmpl.RenamePh("b", "c", true)
+	if err != nil {
+		t.Fatalf("unexpected expected error b → c: %v", err)
+	}
+	if !reflect.DeepEqual(tmpl.Placeholders(), []string{"c"}) {
+		t.Fatalf("wrong placeholders: %v", tmpl.Placeholders())
+	}
 }
 
 // Would be nice to work…
