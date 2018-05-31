@@ -198,9 +198,7 @@ func (t *Template) RenamePh(current, newName string, merge bool) error {
 		return renameErr{current, newName}
 	} else if ok {
 		cIdxs = append(cIdxs, nIdxs...)
-		sort.Slice(cIdxs, func(i, j int) bool {
-			return cIdxs[i] < cIdxs[j]
-		})
+		sort.Slice(cIdxs, func(i, j int) bool { return cIdxs[i] < cIdxs[j] })
 	}
 	delete(t.plhNm2Idxs, current)
 	t.plhNm2Idxs[newName] = cIdxs
@@ -212,14 +210,45 @@ func (t *Template) RenamePh(current, newName string, merge bool) error {
 	return nil
 }
 
-func (t *Template) XformPhs(merge bool, x func(string) string) error {
-	phs := t.Placeholders()
-	for _, ph := range phs {
-		if err := t.RenamePh(ph, x(ph), merge); err != nil {
-			return err
+func (t *Template) RenamePhs(merge bool, current, newNames []string) error {
+	n2i := make(map[string][]int)
+	for i, cn := range current {
+		if cidxs, ok := t.plhNm2Idxs[cn]; !ok {
+			return renameErr{cn}
+		} else {
+			nn := newNames[i]
+			if nidxs, ok := n2i[nn]; ok {
+				if !merge {
+					return renameErr{cn, nn}
+				}
+				nidxs = append(nidxs, cidxs...)
+				sort.Slice(nidxs, func(i, j int) bool { return nidxs[i] < nidxs[j] })
+				n2i[nn] = nidxs
+			} else {
+				n2i[nn] = cidxs
+			}
+		}
+		delete(t.plhNm2Idxs, cn)
+	}
+	for n, idxs := range t.plhNm2Idxs {
+		n2i[n] = idxs
+	}
+	t.plhNm2Idxs = n2i
+	for n, idxs := range n2i {
+		for _, i := range idxs {
+			t.plhAt[i] = n
 		}
 	}
 	return nil
+}
+
+func (t *Template) XformPhs(merge bool, x func(string) string) error {
+	cur := t.Placeholders()
+	nnm := make([]string, len(cur))
+	for i := range cur {
+		nnm[i] = x(cur[i])
+	}
+	return t.RenamePhs(merge, cur, nnm)
 }
 
 func (t *Template) Static() ([]byte, bool) {
@@ -391,6 +420,8 @@ func (bt *BounT) Emit(out io.Writer) (n int) {
 	return n
 }
 
+const NameSep = ':'
+
 func (bt *BounT) Fixate() *Template {
 	it := bt.Template()
 	if it.PlaceholderNum() == 0 {
@@ -410,7 +441,7 @@ func (bt *BounT) fix(to *Template, phPrefix string) {
 				to.Placeholder(phPrefix + phnm)
 			}
 		} else if sbt, ok := pre.(*BounT); ok {
-			subPrefix := phPrefix + sbt.Template().Name + ":" //string(pathSep)
+			subPrefix := phPrefix + sbt.Template().Name + string(NameSep)
 			sbt.fix(to, subPrefix)
 		} else {
 			buf := bytes.NewBuffer(nil)
@@ -426,7 +457,7 @@ func (bt *BounT) fix(to *Template, phPrefix string) {
 			to.Placeholder(phPrefix + phnm)
 		}
 	} else if sbt, ok := pre.(*BounT); ok {
-		subPrefix := phPrefix + sbt.Template().Name + ":" //string(pathSep)
+		subPrefix := phPrefix + sbt.Template().Name + string(NameSep)
 		sbt.fix(to, subPrefix)
 	} else {
 		buf := bytes.NewBuffer(nil)

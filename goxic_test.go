@@ -227,6 +227,36 @@ func TestTemplate_RenamePh(t *testing.T) {
 	}
 }
 
+func ExampleTemplate_XformPhs() {
+	tmpl := NewTemplate("rename")
+	tmpl.AddStr("AB")
+	tmpl.Placeholder("a")
+	tmpl.AddStr("CD")
+	tmpl.Placeholder("b")
+	tmpl.AddStr("EF")
+	tmpl.Placeholder("c")
+	tmpl.AddStr("GH")
+	tmpl.Placeholder("d")
+	tmpl.AddStr("IJ")
+	tmpl.XformPhs(true, func(pi string) string {
+		switch pi {
+		case "a":
+			return "d"
+		case "d":
+			return "a"
+		default:
+			return "b"
+		}
+	})
+	bt := tmpl.NewBounT(nil)
+	bt.BindPName("a", "<A>")
+	bt.BindPName("b", "<B>")
+	bt.BindPName("d", "<D>")
+	bt.Emit(os.Stdout)
+	// Output:
+	// AB<D>CD<B>EF<B>GH<A>IJ
+}
+
 // Would be nice to work…
 //type GxtNest struct {
 //	*Template

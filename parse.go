@@ -53,13 +53,13 @@ func pPop(stack []string) (updStack []string, path string) {
 	return updStack, path
 }
 
-const pathSep = '/'
+const PathSep = '/'
 
 func pathStr(path []string) string {
 	buf := bytes.NewBufferString("")
 	for i, s := range path {
 		if i > 0 {
-			buf.WriteRune(pathSep)
+			buf.WriteRune(PathSep)
 		}
 		buf.WriteString(s)
 	}
@@ -68,7 +68,7 @@ func pathStr(path []string) string {
 
 func tmplName(rootName string, path string) string {
 	if len(path) > 0 {
-		return rootName + string(pathSep) + path
+		return rootName + string(PathSep) + path
 	} else {
 		return rootName
 	}
@@ -148,11 +148,11 @@ func (p *Parser) Parse(rd io.Reader, rootName string, into map[string]*Template)
 			}
 			storeTemplate(into, curTmpl, pStr, dup)
 			subtName := match[p.StartNameRgxGrp]
-			if strings.IndexRune(subtName, pathSep) >= 0 {
+			if strings.IndexRune(subtName, PathSep) >= 0 {
 				return fmt.Errorf(
 					"sub-temlpate name '%s' contains path separator %c",
 					subtName,
-					pathSep)
+					PathSep)
 			}
 			path, pStr = pPush(path, subtName)
 			curTmpl = into[pStr]
