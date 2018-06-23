@@ -4,6 +4,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/fractalqb/goxic)](https://goreportcard.com/report/github.com/fractalqb/goxic)
 [![GoDoc](https://godoc.org/github.com/fractalqb/goxic?status.svg)](https://godoc.org/github.com/fractalqb/goxic)
 
+`import "git.fractalqb.de/fractalqb/goxic"`
+
+---
+
 Template engine with temlates that only have named placeholders
 – nothing more! 
 
