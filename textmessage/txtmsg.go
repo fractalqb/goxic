@@ -5,7 +5,7 @@ package textmessage
 import (
 	"io"
 
-	"github.com/fractalqb/goxic"
+	"git.fractalqb.de/fractalqb/goxic"
 	"golang.org/x/text/message"
 )
 
