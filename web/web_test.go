@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/fractalqb/goxic"
+	"git.fractalqb.de/fractalqb/goxic"
 	"github.com/stvp/assert"
 )
 

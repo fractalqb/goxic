@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"unicode/utf8"
 
-	"github.com/fractalqb/goxic"
+	"git.fractalqb.de/fractalqb/goxic"
 )
 
 func NewHtmlParser() *goxic.Parser {
