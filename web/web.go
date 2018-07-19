@@ -1,5 +1,5 @@
 // Template engine that only has named placeholders – nothing more!
-// Copyright (C) 2017 Marcus Perlick
+// Copyright (C) 2017-2018 Marcus Perlick
 package web
 
 import (
@@ -50,6 +50,12 @@ func (hew *HtmlEscWriter) Write(p []byte) (n int, err error) {
 				return n, errors.New("utf8 rune decoding error")
 			} else {
 				switch r {
+				case '\000':
+					if i, err := hew.Escape.Write([]byte("\uFFFD")); err != nil {
+						return n + i, err
+					} else {
+						n += i
+					}
 				case '<':
 					if i, err := hew.Escape.Write([]byte("&lt;")); err != nil {
 						return n + i, err

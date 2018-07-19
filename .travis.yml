@@ -1,9 +1,8 @@
 language: go
 
 go:
+  - 1.10.x
   - tip
-
-go_import_path: git.fractalqb.de/fractalqb/goxic
 
 before_install:
   - go get -t -v ./...

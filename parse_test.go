@@ -1,5 +1,5 @@
 // Template engine that only has named placeholders – nothing more!
-// Copyright (C) 2017 Marcus Perlick
+// Copyright (C) 2017-2018 Marcus Perlick
 package goxic
 
 import (
