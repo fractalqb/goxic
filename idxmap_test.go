@@ -15,9 +15,9 @@ type IMap struct {
 
 func TestIndexMap(t *testing.T) {
 	tmpl := NewTemplate(t.Name())
-	tmpl.Placeholder("Foo")
-	tmpl.Placeholder("bar")
-	tmpl.Placeholder("quux")
+	tmpl.Ph("Foo")
+	tmpl.Ph("bar")
+	tmpl.Ph("quux")
 	var imap IMap
 	unmappend := InitIndexMap(&imap, tmpl, IdName)
 	assert.Equal(t, tmpl, imap.Template)

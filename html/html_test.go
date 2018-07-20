@@ -1,6 +1,6 @@
 // Template engine that only has named placeholders – nothing more!
 // Copyright (C) 2017-2018 Marcus Perlick
-package web
+package html
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 
 func TestHtmlEscWriter_Write(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
-	ewr := HtmlEscWriter{Escape: buf}
+	ewr := EscWriter{Escape: buf}
 	n, err := ewr.Write([]byte("<>&\"'"))
 	assert.Nil(t, err, "have error: ", err)
 	assert.Equal(t, 25, n, "expected bytes written")
@@ -23,7 +23,7 @@ func TestHtmlEscWriter_Write(t *testing.T) {
 
 func TestHtmlEscWriter_umls(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
-	ewr := HtmlEscWriter{Escape: buf}
+	ewr := EscWriter{Escape: buf}
 	n, err := ewr.Write([]byte("öäüß"))
 	assert.Nil(t, err, "have error: ", err)
 	assert.Equal(t, 8, n, "expected bytes written")
@@ -32,7 +32,7 @@ func TestHtmlEscWriter_umls(t *testing.T) {
 
 func BenchmarkHtmlEscWriter_umls(b *testing.B) {
 	buf := bytes.NewBuffer(nil)
-	ewr := HtmlEscWriter{Escape: buf}
+	ewr := EscWriter{Escape: buf}
 	txt := []byte("öäüß")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -42,9 +42,9 @@ func BenchmarkHtmlEscWriter_umls(b *testing.B) {
 
 func ExampleEscape() {
 	tmpl := goxic.NewTemplate("")
-	tmpl.Placeholder("html")
+	tmpl.Ph("html")
 	bt := tmpl.NewBounT(nil)
-	bt.BindName("html", HtmlEsc{goxic.Print{"<&\"'>"}})
+	bt.BindName("html", Escaper{goxic.Print{"<&\"'>"}})
 	bt.Emit(os.Stdout)
 	// Output:
 	// &lt;&amp;&quot;&apos;&gt;

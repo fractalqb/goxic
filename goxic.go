@@ -29,6 +29,7 @@ type Template struct {
 	Name       string
 	fix        []fragment
 	plhAt      []string
+	escAt      []CntWrapper // TODO
 	plhNm2Idxs map[string][]int
 }
 
@@ -42,8 +43,8 @@ func NewTemplate(name string) *Template {
 // Add adds a new piece of static content to the end of the template.
 // Note that static context is merged to preceeding static content as
 // long as no placholder was added before.
-func (t *Template) AddFix(fixFragment []byte) {
-	if phnm := t.PlaceholderAt(len(t.fix)); len(phnm) > 0 {
+func (t *Template) AddFix(fixFragment []byte) *Template {
+	if phnm := t.PhAt(len(t.fix)); len(phnm) > 0 {
 		t.fix = append(t.fix, fixFragment)
 	} else if len(fixFragment) > 0 {
 		if len(t.fix) == 0 {
@@ -56,17 +57,18 @@ func (t *Template) AddFix(fixFragment []byte) {
 			t.fix[len(t.fix)-1] = tmp
 		}
 	}
+	return t
 }
 
 // AddStr adds a string as static content to the end of the temlate.
-func (t *Template) AddStr(str string) {
-	t.AddFix(fragment(str))
+func (t *Template) AddStr(str string) *Template {
+	return t.AddFix(fragment(str))
 }
 
 // Placeholder adds a new placeholder to the end of the template.
-func (t *Template) Placeholder(name string) {
+func (t *Template) Ph(name string) *Template {
 	idx := t.FixCount()
-	if phnm := t.PlaceholderAt(idx); len(phnm) > 0 {
+	if phnm := t.PhAt(idx); len(phnm) > 0 {
 		t.AddFix([]byte{})
 		idx++
 	}
@@ -79,6 +81,26 @@ func (t *Template) Placeholder(name string) {
 		t.plhNm2Idxs[name] = idxs
 	} else {
 		t.plhNm2Idxs[name] = []int{idx}
+	}
+	return t
+}
+
+func (t *Template) PhWrap(name string, wrapper CntWrapper) *Template {
+	res := t.Ph(name)
+	t.Wrap(wrapper, len(t.plhAt)-1)
+	return res
+}
+
+func (t *Template) Wrap(wrapper CntWrapper, idxs ...int) {
+	for _, idx := range idxs {
+		if cap(t.escAt) <= idx {
+			nesc := make([]CntWrapper, idx+1)
+			copy(nesc, t.escAt)
+			nesc[idx] = wrapper
+			t.escAt = nesc
+		} else {
+			t.escAt[idx] = wrapper
+		}
 	}
 }
 
@@ -98,7 +120,7 @@ func (t *Template) FixAt(idx int) []byte {
 	}
 }
 
-func (t *Template) ForeachPlaceholder(r func(name string, idxs []int)) {
+func (t *Template) ForeachPh(r func(name string, idxs []int)) {
 	for nm, idxs := range t.plhNm2Idxs {
 		r(nm, idxs)
 	}
@@ -106,13 +128,13 @@ func (t *Template) ForeachPlaceholder(r func(name string, idxs []int)) {
 
 // PlaceholderNum returns the number of placeholders defined in the
 // template.
-func (t *Template) PlaceholderNum() int {
+func (t *Template) PhNum() int {
 	return len(t.plhNm2Idxs)
 }
 
 // Placeholders returns all placeholders – more precisely placeholder
 // names – defined in the template.
-func (t *Template) Placeholders() []string {
+func (t *Template) Phs() []string {
 	res := make([]string, 0, len(t.plhNm2Idxs))
 	for nm := range t.plhNm2Idxs {
 		res = append(res, nm)
@@ -124,20 +146,24 @@ func (t *Template) Placeholders() []string {
 // static content idx-1 and static content idx. Note that
 // PlaceholderAt(0) will be emitted before the first piece of static
 // content. This placeholder is optional.
-func (t *Template) PlaceholderAt(idx int) string {
+func (t *Template) PhAt(idx int) string {
 	if t.plhAt == nil || idx >= len(t.plhAt) {
 		return ""
-	} else if name := t.plhAt[idx]; name == "" {
-		return ""
-	} else {
-		return name
 	}
+	return t.plhAt[idx]
+}
+
+func (t *Template) WrapAt(idx int) CntWrapper {
+	if t.escAt == nil || idx >= len(t.escAt) {
+		return nil
+	}
+	return t.escAt[idx]
 }
 
 // PlaceholderIdxs returns the positions in which one placeholder will
 // be emitted. Note that placeholder index 0 is – if define – emitted
 // before the first piece of fixed content.
-func (t *Template) PlaceholderIdxs(name string) []int {
+func (t *Template) PhIdxs(name string) []int {
 	if res, ok := t.plhNm2Idxs[name]; !ok {
 		return nil
 	} else if len(res) == 0 {
@@ -242,7 +268,7 @@ func (t *Template) RenamePhs(merge bool, current, newNames []string) error {
 }
 
 func (t *Template) XformPhs(merge bool, x func(string) string) error {
-	cur := t.Placeholders()
+	cur := t.Phs()
 	nnm := make([]string, len(cur))
 	for i := range cur {
 		nnm[i] = x(cur[i])
@@ -251,7 +277,7 @@ func (t *Template) XformPhs(merge bool, x func(string) string) error {
 }
 
 func (t *Template) Static() ([]byte, bool) {
-	if t.PlaceholderNum() == 0 {
+	if t.PhNum() == 0 {
 		switch t.FixCount() {
 		case 0:
 			return []byte{}, true
@@ -294,6 +320,8 @@ func (e empty) Emit(wr io.Writer) int {
 // output.
 const Empty empty = 0
 
+type CntWrapper func(cnt Content) (wrapped Content)
+
 // BounT keeps the placeholder bindings for one specific Template. Use
 // NewBounT or NewInitBounT to create a binding object from a
 // Template.
@@ -314,7 +342,10 @@ func (t *Template) NewBounT(reuse *BounT) *BounT {
 func (t *Template) NewInitBounT(cnt Content, reuse *BounT) *BounT {
 	reuse = t.NewBounT(reuse)
 	for i := 0; i < len(reuse.fill); i++ {
-		if len(t.PlaceholderAt(i)) > 0 {
+		if len(t.PhAt(i)) > 0 {
+			if esc := t.WrapAt(i); esc != nil {
+				cnt = esc(cnt)
+			}
 			reuse.fill[i] = cnt
 		}
 	}
@@ -328,9 +359,13 @@ func (bt *BounT) Template() *Template {
 // Method Bind returns the number of "anonymous binds", i.e. placeholders with
 // empty names that got a binding.
 func (bt *BounT) Bind(phIdxs []int, cnt Content) (anonymous int) {
+	t := bt.Template()
 	for _, i := range phIdxs {
-		if len(bt.Template().PlaceholderAt(i)) == 0 {
+		if len(t.PhAt(i)) == 0 {
 			anonymous++
+		}
+		if esc := t.WrapAt(i); esc != nil {
+			cnt = esc(cnt)
 		}
 		bt.fill[i] = cnt
 	}
@@ -338,7 +373,7 @@ func (bt *BounT) Bind(phIdxs []int, cnt Content) (anonymous int) {
 }
 
 func (bt *BounT) BindName(name string, cnt Content) error {
-	idxs := bt.Template().PlaceholderIdxs(name)
+	idxs := bt.Template().PhIdxs(name)
 	if idxs == nil {
 		return fmt.Errorf("no placeholder: '%s'", name)
 	} else {
@@ -348,14 +383,14 @@ func (bt *BounT) BindName(name string, cnt Content) error {
 }
 
 func (bt *BounT) BindIfName(name string, cnt Content) {
-	idxs := bt.Template().PlaceholderIdxs(name)
+	idxs := bt.Template().PhIdxs(name)
 	if idxs != nil {
 		bt.Bind(idxs, cnt)
 	}
 }
 
 func (bt *BounT) BindMatch(pattern *regexp.Regexp, cnt Content) {
-	for _, ph := range bt.Template().Placeholders() {
+	for _, ph := range bt.Template().Phs() {
 		if pattern.MatchString(ph) {
 			bt.BindName(ph, cnt)
 		}
@@ -396,7 +431,7 @@ func (bt *BounT) Emit(out io.Writer) (n int) {
 	for i := 0; i < fCount; i++ {
 		if f := bt.fill[i]; f != nil {
 			n += f.Emit(out)
-		} else if ph := bt.tmpl.PlaceholderAt(i); len(ph) > 0 {
+		} else if ph := bt.tmpl.PhAt(i); len(ph) > 0 {
 			panic(EmitError{n,
 				fmt.Errorf("unbound placeholder '%s' in template '%s'",
 					ph,
@@ -410,7 +445,7 @@ func (bt *BounT) Emit(out io.Writer) (n int) {
 	}
 	if f := bt.fill[fCount]; f != nil {
 		n += f.Emit(out)
-	} else if ph := bt.tmpl.PlaceholderAt(fCount); len(ph) > 0 {
+	} else if ph := bt.tmpl.PhAt(fCount); len(ph) > 0 {
 		panic(EmitError{n,
 			fmt.Errorf("unbound placeholder '%s' in template '%s'",
 				ph,
@@ -423,7 +458,7 @@ const NameSep = ':'
 
 func (bt *BounT) Fixate() *Template {
 	it := bt.Template()
-	if it.PlaceholderNum() == 0 {
+	if it.PhNum() == 0 {
 		return nil
 	}
 	res := NewTemplate(it.Name)
@@ -436,8 +471,8 @@ func (bt *BounT) fix(to *Template, phPrefix string) {
 	for idx, frag := range it.fix {
 		pre := bt.fill[idx]
 		if pre == nil {
-			if phnm := it.PlaceholderAt(idx); len(phnm) > 0 {
-				to.Placeholder(phPrefix + phnm)
+			if phnm := it.PhAt(idx); len(phnm) > 0 {
+				to.Ph(phPrefix + phnm)
 			}
 		} else if sbt, ok := pre.(*BounT); ok {
 			subPrefix := phPrefix + sbt.Template().Name + string(NameSep)
@@ -452,8 +487,8 @@ func (bt *BounT) fix(to *Template, phPrefix string) {
 	idx := len(it.fix)
 	pre := bt.fill[idx]
 	if pre == nil {
-		if phnm := it.PlaceholderAt(idx); len(phnm) > 0 {
-			to.Placeholder(phPrefix + phnm)
+		if phnm := it.PhAt(idx); len(phnm) > 0 {
+			to.Ph(phPrefix + phnm)
 		}
 	} else if sbt, ok := pre.(*BounT); ok {
 		subPrefix := phPrefix + sbt.Template().Name + string(NameSep)

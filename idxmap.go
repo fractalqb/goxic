@@ -36,7 +36,7 @@ func InitIndexMap(imap interface{}, tmpl *Template, mapNames func(string) string
 				imapVal := reflect.ValueOf(imap).Elem()
 				imapVal.Field(fidx).Set(reflect.ValueOf(tmpl))
 			} else if ph, opt, err := isPhIdxs(&sfTy, mapNames); len(ph) > 0 {
-				var idxs []int = tmpl.PlaceholderIdxs(string(ph))
+				var idxs []int = tmpl.PhIdxs(string(ph))
 				if idxs != nil {
 					mappedPhs[ph] = true
 					sf := im.Field(fidx)
@@ -52,9 +52,9 @@ func InitIndexMap(imap interface{}, tmpl *Template, mapNames func(string) string
 	default:
 		panic("cannto make index map in " + imTy.Kind().String())
 	}
-	if len(mappedPhs) != tmpl.PlaceholderNum() {
+	if len(mappedPhs) != tmpl.PhNum() {
 		um := &Unmapped{T: tmpl}
-		for _, p := range tmpl.Placeholders() {
+		for _, p := range tmpl.Phs() {
 			if _, ok := mappedPhs[p]; !ok {
 				um.Placeholders = append(um.Placeholders, p)
 			}

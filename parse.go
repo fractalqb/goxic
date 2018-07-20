@@ -182,7 +182,7 @@ func (p *Parser) Parse(rd io.Reader, rootName string, into map[string]*Template)
 				curTmpl.AddStr(endl)
 			}
 			phName := match[p.PhNameRgxGrp]
-			curTmpl.Placeholder(phName)
+			curTmpl.Ph(phName)
 			if p.phTBrk(match) {
 				endl = p.Endl
 			} else {
@@ -228,7 +228,7 @@ func (p *Parser) addLine(t *Template, line string) error {
 				"unexpected end of line in placeholder '%s'",
 				line)
 		}
-		t.Placeholder(line[:tok])
+		t.Ph(line[:tok])
 		line = line[tok+len(p.EndInlinePh):]
 	}
 	if len(line) > 0 {

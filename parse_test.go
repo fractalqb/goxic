@@ -99,7 +99,7 @@ func TestParser_addLine(t *testing.T) {
 	assert.Equal(t, 2, tmpl.FixCount())
 	assert.Equal(t, "foo", string(tmpl.FixAt(0)))
 	assert.Equal(t, "baz", string(tmpl.FixAt(1)))
-	assertIndices(t, tmpl.PlaceholderIdxs("bar"), 1)
+	assertIndices(t, tmpl.PhIdxs("bar"), 1)
 }
 
 func ExampleParser() {
@@ -196,7 +196,7 @@ line2`)
 		t.Fatalf("cannot parse template: %s", err)
 	} else {
 		tmpl := ts[""]
-		assertIndices(t, tmpl.PlaceholderIdxs("phnm"), 1)
+		assertIndices(t, tmpl.PhIdxs("phnm"), 1)
 		assert.Equal(t, 2, tmpl.FixCount())
 		assertEndls(t, tmpl.FixAt(0), false, false)
 		assertEndls(t, tmpl.FixAt(1), false, false)
@@ -213,7 +213,7 @@ line2`)
 		t.Fatalf("cannot parse template: %s", err)
 	} else {
 		tmpl := ts[""]
-		assertIndices(t, tmpl.PlaceholderIdxs("phnm"), 1)
+		assertIndices(t, tmpl.PhIdxs("phnm"), 1)
 		assert.Equal(t, 2, tmpl.FixCount())
 		assertEndls(t, tmpl.FixAt(0), false, true)
 		assertEndls(t, tmpl.FixAt(1), false, false)
@@ -230,7 +230,7 @@ line2`)
 		t.Fatalf("cannot parse template: %s", err)
 	} else {
 		tmpl := ts[""]
-		assertIndices(t, tmpl.PlaceholderIdxs("phnm"), 1)
+		assertIndices(t, tmpl.PhIdxs("phnm"), 1)
 		assert.Equal(t, 2, tmpl.FixCount())
 		assertEndls(t, tmpl.FixAt(0), false, false)
 		assertEndls(t, tmpl.FixAt(1), true, false)
@@ -247,7 +247,7 @@ line2`)
 		t.Fatalf("cannot parse template: %s", err)
 	} else {
 		tmpl := ts[""]
-		assertIndices(t, tmpl.PlaceholderIdxs("phnm"), 1)
+		assertIndices(t, tmpl.PhIdxs("phnm"), 1)
 		assert.Equal(t, 2, tmpl.FixCount())
 		assertEndls(t, tmpl.FixAt(0), false, true)
 		assertEndls(t, tmpl.FixAt(1), true, false)
@@ -382,8 +382,8 @@ func TestOnlyPlaceholder(t *testing.T) {
 		tp := ts[""]
 		assert.NotNil(t, tp)
 		assert.Equal(t, 0, tp.FixCount())
-		assert.Equal(t, 1, tp.PlaceholderNum())
-		assert.Equal(t, "foo", tp.PlaceholderAt(0))
+		assert.Equal(t, 1, tp.PhNum())
+		assert.Equal(t, "foo", tp.PhAt(0))
 	}
 }
 

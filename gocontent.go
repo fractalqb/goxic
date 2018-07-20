@@ -90,3 +90,44 @@ func (d Data) Emit(wr io.Writer) int {
 		return n
 	}
 }
+
+type Embracer struct {
+	Prefix  []byte
+	Cnt     Content
+	Postfix []byte
+}
+
+func (e *Embracer) Emit(wr io.Writer) (res int) {
+	if e.Prefix != nil {
+		n, err := wr.Write(e.Prefix)
+		if err != nil {
+			panic(EmitError{n, err})
+		}
+		res = n
+	}
+	res += e.Cnt.Emit(wr)
+	if e.Postfix != nil {
+		n, err := wr.Write(e.Postfix)
+		if err != nil {
+			panic(EmitError{n, err})
+		}
+		res += n
+	}
+	return res
+}
+
+func Embrace(prefix string, c Content, postfix string) Embracer {
+	return Embracer{
+		Prefix:  []byte(prefix),
+		Cnt:     c,
+		Postfix: []byte(postfix),
+	}
+}
+
+func (e *Embracer) Wrap(c Content) Content {
+	return &Embracer{
+		Prefix:  e.Prefix,
+		Cnt:     c,
+		Postfix: e.Postfix,
+	}
+}

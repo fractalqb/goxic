@@ -1,6 +1,6 @@
 // Template engine that only has named placeholders – nothing more!
 // Copyright (C) 2017-2018 Marcus Perlick
-package web
+package html
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"git.fractalqb.de/fractalqb/goxic"
 )
 
-func NewHtmlParser() *goxic.Parser {
+func NewParser() *goxic.Parser {
 	res := goxic.Parser{
 		StartInlinePh: "`",
 		EndInlinePh:   "`",
@@ -34,13 +34,13 @@ func NewHtmlParser() *goxic.Parser {
 	return &res
 }
 
-type HtmlEscWriter struct {
+type EscWriter struct {
 	Escape io.Writer
 	buf    [utf8.UTFMax]byte
 	wp     int
 }
 
-func (hew *HtmlEscWriter) Write(p []byte) (n int, err error) {
+func (hew *EscWriter) Write(p []byte) (n int, err error) {
 	for _, b := range p {
 		hew.buf[hew.wp] = b
 		hew.wp++
@@ -99,22 +99,26 @@ func (hew *HtmlEscWriter) Write(p []byte) (n int, err error) {
 	return n, nil
 }
 
-func EscHtml(str string) string {
+func Esc(str string) string {
 	buf := bytes.NewBuffer(nil)
-	ewr := HtmlEscWriter{Escape: buf}
+	ewr := EscWriter{Escape: buf}
 	if _, err := ewr.Write([]byte(str)); err != nil {
 		panic(err)
 	}
 	return buf.String()
 }
 
-type HtmlEsc struct {
+type Escaper struct {
 	Cnt goxic.Content
 }
 
-func (hc HtmlEsc) Emit(wr io.Writer) int {
-	esc := HtmlEscWriter{Escape: wr}
+func (hc Escaper) Emit(wr io.Writer) int {
+	esc := EscWriter{Escape: wr}
 	return hc.Cnt.Emit(&esc)
+}
+
+func EscWrap(c goxic.Content) goxic.Content {
+	return Escaper{c}
 }
 
 // Span wraps content into a HTML <span></span> element
@@ -125,7 +129,7 @@ type Span struct {
 }
 
 func NewSpan(around goxic.Content, spanId string, spanClass string) *Span {
-	res := Span{id: EscHtml(spanId), class: EscHtml(spanClass), Wrapped: around}
+	res := Span{id: Esc(spanId), class: Esc(spanClass), Wrapped: around}
 	return &res
 }
 
