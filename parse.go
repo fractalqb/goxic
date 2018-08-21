@@ -29,6 +29,39 @@ type Parser struct {
 	PrepLine         func(string) string
 }
 
+func NewParser(inlineStart, inlineEnd, lcomStart, lcomEnd string) *Parser {
+	res := &Parser{
+		StartInlinePh: inlineStart,
+		EndInlinePh:   inlineEnd,
+		BlockPh: regexp.MustCompile(
+			`^[ \t]*` +
+				lcomStart +
+				`(\\?) >>> ([a-zA-Z0-9_-]+) <<< (\\?)` +
+				lcomEnd +
+				`[ \t]*$`),
+		PhNameRgxGrp: 2,
+		PhLBrkRgxGrp: 1,
+		PhTBrkRgxGrp: 3,
+		StartSubTemplate: regexp.MustCompile(
+			`^[ \t]*` +
+				lcomStart +
+				`(\\?) >>> ([a-zA-Z0-9_-]+) >>> ` +
+				lcomEnd +
+				`[ \t]*$`),
+		StartNameRgxGrp: 2,
+		StartLBrkRgxGrp: 1,
+		EndSubTemplate: regexp.MustCompile(
+			`^[ \t]*` +
+				lcomStart +
+				` <<< ([a-zA-Z0-9_-]+) <<< (\\?)` +
+				lcomEnd +
+				`[ \t]*$`),
+		EndNameRgxGrp: 1,
+		EndTBrkRgxGrp: 2,
+		Endl:          "\n"}
+	return res
+}
+
 func PrepTrimWS(line string) (trimmed string) {
 	return strings.Trim(line, " \t")
 }

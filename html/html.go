@@ -7,31 +7,31 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
 	"unicode/utf8"
 
 	"git.fractalqb.de/fractalqb/goxic"
 )
 
 func NewParser() *goxic.Parser {
-	res := goxic.Parser{
-		StartInlinePh: "`",
-		EndInlinePh:   "`",
-		BlockPh: regexp.MustCompile(
-			`^[ \t]*<!--(\\?) >>> ([a-zA-Z0-9_-]+) <<< (\\?)-->[ \t]*$`),
-		PhNameRgxGrp: 2,
-		PhLBrkRgxGrp: 1,
-		PhTBrkRgxGrp: 3,
-		StartSubTemplate: regexp.MustCompile(
-			`^[ \t]*<!--(\\?) >>> ([a-zA-Z0-9_-]+) >>> -->[ \t]*$`),
-		StartNameRgxGrp: 2,
-		StartLBrkRgxGrp: 1,
-		EndSubTemplate: regexp.MustCompile(
-			`^[ \t]*<!-- <<< ([a-zA-Z0-9_-]+) <<< (\\?)-->[ \t]*$`),
-		EndNameRgxGrp: 1,
-		EndTBrkRgxGrp: 2,
-		Endl:          "\n"}
-	return &res
+	res := goxic.NewParser("`", "`", "<!--", "-->")
+	//	res := &goxic.Parser{
+	//		StartInlinePh: "`",
+	//		EndInlinePh:   "`",
+	//		BlockPh: regexp.MustCompile(
+	//			`^[ \t]*<!--(\\?) >>> ([a-zA-Z0-9_-]+) <<< (\\?)-->[ \t]*$`),
+	//		PhNameRgxGrp: 2,
+	//		PhLBrkRgxGrp: 1,
+	//		PhTBrkRgxGrp: 3,
+	//		StartSubTemplate: regexp.MustCompile(
+	//			`^[ \t]*<!--(\\?) >>> ([a-zA-Z0-9_-]+) >>> -->[ \t]*$`),
+	//		StartNameRgxGrp: 2,
+	//		StartLBrkRgxGrp: 1,
+	//		EndSubTemplate: regexp.MustCompile(
+	//			`^[ \t]*<!-- <<< ([a-zA-Z0-9_-]+) <<< (\\?)-->[ \t]*$`),
+	//		EndNameRgxGrp: 1,
+	//		EndTBrkRgxGrp: 2,
+	//		Endl:          "\n"}
+	return res
 }
 
 type EscWriter struct {
