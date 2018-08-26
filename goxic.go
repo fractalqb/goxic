@@ -267,6 +267,14 @@ func (t *Template) RenamePhs(merge bool, current, newNames []string) error {
 	return nil
 }
 
+func StripPath(ph string) string {
+	sep := strings.LastIndexByte(ph, byte(NameSep))
+	if sep >= 0 {
+		ph = ph[sep+1:]
+	}
+	return ph
+}
+
 func (t *Template) XformPhs(merge bool, x func(string) string) error {
 	cur := t.Phs()
 	nnm := make([]string, len(cur))
